@@ -31,3 +31,19 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### CI/CD & Build Artifacts ###
+trivy-results.sarif
+dependency-check-report.*
+*.log
+*.tmp
+
+### Maven ###
+.m2/
+pom.xml.backup
+pom.xml.releaseBackup
+release.properties
+
+### Docker ###
+.docker/
+docker-compose.override.yaml
