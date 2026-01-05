@@ -19,5 +19,8 @@ spring:
       client:
         registration:
           github:
-            client-id: ${GITHUB_CLIENT_ID:Ov23ligBJA7TCwhjirn1}
-            client-secret: ${GITHUB_CLIENT_SECRET:c1527759270156d83bcc79830b5eefbb64995001}
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
