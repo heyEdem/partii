@@ -13,3 +13,11 @@ spring:
   h2:
     console:
       enabled: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_CLIENT_ID:Ov23ligBJA7TCwhjirn1}
+            client-secret: ${GITHUB_CLIENT_SECRET:c1527759270156d83bcc79830b5eefbb64995001}
