@@ -47,3 +47,6 @@ release.properties
 ### Docker ###
 .docker/
 docker-compose.override.yaml
+
+### Environment Files ###
+partii.env
