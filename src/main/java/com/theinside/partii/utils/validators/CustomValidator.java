@@ -11,6 +11,7 @@ import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.stereotype.Service;
 
 import java.util.regex.Pattern;
 
@@ -23,6 +24,7 @@ import static com.theinside.partii.utils.CustomMessages.*;
  * according to specified rules and patterns.
  */
 
+@Service
 @Slf4j
 @RequiredArgsConstructor
 public class CustomValidator {

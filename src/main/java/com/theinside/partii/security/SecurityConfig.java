@@ -1,16 +1,30 @@
 package com.theinside.partii.security;
 
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
+import com.theinside.partii.entity.User;
+import com.theinside.partii.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Duration;
 
@@ -20,12 +34,29 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final KeyManager keyManager;
+
+    public SecurityConfig(KeyManager keyManager) {
+        this.keyManager = keyManager;
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
+    }
+
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             CustomOAuth2UserService customOAuth2UserService,
-                                            CustomOidcUserService customOidcUserService) throws Exception {
-        http.authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/partii/api/v1/auth/home", "/partii/api/v1/auth/logout", "/partii/api/v1/auth/logout-success").permitAll()
+                                            CustomOidcUserService customOidcUserService,
+                                            JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/partii/api/v1/auth/**",
+                                "/error"
+                        ).permitAll()
                         .anyRequest().authenticated())
                 .formLogin(withDefaults())
                 .oauth2Login(oauth2 -> oauth2
@@ -38,7 +69,9 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/partii/api/v1/auth/logout-success")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
-                        .deleteCookies("JSESSIONID"));
+                        .deleteCookies("JSESSIONID"))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
@@ -75,5 +108,37 @@ public class SecurityConfig {
             throw new IllegalArgumentException(
                 "ClientRegistration must have a JWK Set URI configured");
         };
+    }
+
+    @Bean
+    public Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter(UserRepository userRepository) {
+        return jwt -> {
+            String email = jwt.getSubject();
+
+            User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+            SecurityUser securityUser = new SecurityUser(user);
+
+            return new UsernamePasswordAuthenticationToken(
+                    user,
+                    null
+            );
+        };
+
+    }
+    @Bean
+    JwtEncoder jwtEncoder(){
+        JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(keyManager.getJWKSet());
+        return new NimbusJwtEncoder(jwkSource);
+    }
+
+    @Bean
+    JwtDecoder jwtDecoder() {
+        return NimbusJwtDecoder.withPublicKey(keyManager.getPublicKey()).build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 }

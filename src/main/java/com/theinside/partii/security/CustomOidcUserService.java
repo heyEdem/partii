@@ -39,16 +39,16 @@ public class CustomOidcUserService extends OidcUserService {
         User user = userRepository.findByProviderAndProviderId(provider, providerId)
                 .map(existingUser -> {
                     existingUser.setEmail(email);
-                    existingUser.setName(name);
-                    existingUser.setImageUrl(avatarUrl);
+                    existingUser.setLegalName(name);
+                    existingUser.setProfilePictureUrl(avatarUrl);
                     log.info("Updating existing user: id={}, email={}", existingUser.getId(), email);
                     return userRepository.save(existingUser);
                 })
                 .orElseGet(() -> {
                     User newUser = User.builder()
                             .email(email)
-                            .name(name)
-                            .imageUrl(avatarUrl)
+                            .legalName(name)
+                            .profilePictureUrl(avatarUrl)
                             .provider(provider)
                             .providerId(providerId)
                             .build();
