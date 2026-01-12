@@ -50,6 +50,10 @@ public class User {
     @Column(nullable = false)
     private AccountStatus accountStatus;
 
+    private boolean isVerified = false;
+    private boolean isEnabled = true;
+
+    private int totalRatings = 0;
     private int averageRating;
 
     private int eventsAttended = 0;
