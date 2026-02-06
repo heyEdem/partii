@@ -1,21 +1,13 @@
 package com.theinside.partii.security;
 
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
-import com.theinside.partii.entity.User;
-import com.theinside.partii.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.web.SecurityFilterChain;
@@ -49,27 +41,23 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http,
                                             CustomOAuth2UserService customOAuth2UserService,
                                             CustomOidcUserService customOidcUserService,
-                                            JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+                                            JwtAuthenticationFilter jwtAuthenticationFilter,
+                                            OAuth2AuthenticationSuccessHandler oauth2AuthenticationSuccessHandler) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/partii/api/v1/auth/**",
+                                "/.well-known/jwks.json",
                                 "/error"
                         ).permitAll()
+                        .requestMatchers("/partii/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
-                .formLogin(withDefaults())
                 .oauth2Login(oauth2 -> oauth2
-                        .defaultSuccessUrl("/partii/api/v1/auth/user", true)
+                        .successHandler(oauth2AuthenticationSuccessHandler)
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                                 .oidcUserService(customOidcUserService)))
-                .logout(logout -> logout
-                        .logoutUrl("/partii/api/v1/auth/logout")
-                        .logoutSuccessUrl("/partii/api/v1/auth/logout-success")
-                        .invalidateHttpSession(true)
-                        .clearAuthentication(true)
-                        .deleteCookies("JSESSIONID"))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -110,31 +98,35 @@ public class SecurityConfig {
         };
     }
 
+
+    /**
+     * JWT Encoder that builds a fresh NimbusJwtEncoder on every encode() call.
+     * This allows key rotation to take effect immediately without restarting.
+     */
     @Bean
-    public Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter(UserRepository userRepository) {
-        return jwt -> {
-            String email = jwt.getSubject();
-
-            User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-            SecurityUser securityUser = new SecurityUser(user);
-
-            return new UsernamePasswordAuthenticationToken(
-                    user,
-                    null
-            );
+    JwtEncoder jwtEncoder() {
+        return params -> {
+            var jwkSource = new ImmutableJWKSet<>(keyManager.getJWKSet());
+            return new NimbusJwtEncoder(jwkSource).encode(params);
         };
-
-    }
-    @Bean
-    JwtEncoder jwtEncoder(){
-        JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(keyManager.getJWKSet());
-        return new NimbusJwtEncoder(jwkSource);
     }
 
+    /**
+     * JWT Decoder that builds a fresh NimbusJwtDecoder on every decode() call.
+     * This allows key rotation to take effect immediately without restarting.
+     */
     @Bean
     JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withPublicKey(keyManager.getPublicKey()).build();
+        return token -> {
+            try {
+                var decoder = NimbusJwtDecoder.withPublicKey(keyManager.getPublicKey()).build();
+                return decoder.decode(token);
+            } catch (JwtException e) {
+                throw e;
+            } catch (Exception e) {
+                throw new BadJwtException("Failed to decode JWT: " + e.getMessage(), e);
+            }
+        };
     }
 
     @Bean

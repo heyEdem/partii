@@ -54,6 +54,12 @@ public class User {
 
     private boolean isVerified = false;
     private boolean isEnabled = true;
+    
+    @Builder.Default
+    private boolean isAdmin = false;
+    
+    @Builder.Default
+    private boolean profileCompleted = false;
 
     private int totalRatings = 0;
     private int averageRating;
@@ -70,7 +76,6 @@ public class User {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    @Column(nullable = false)
     private Instant deletedAt;
     @PrePersist
     protected void onCreate() {

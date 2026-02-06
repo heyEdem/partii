@@ -33,7 +33,7 @@ public class TokenController {
         return keyManager.getJWKSet().toPublicJWKSet().toJSONObject();
     }
 
-    @PostMapping("/auth/keys/rotate")
+    @PostMapping("/partii/api/v1/admin/keys/rotate")
     public GenericMessageResponse rotateKeys() {
         keyManager.rotateKeys();
         return new GenericMessageResponse(KEYS_ROTATED_SUCCESSFULLY);

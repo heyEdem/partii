@@ -36,6 +36,11 @@ public class RefreshToken {
 
     @Column(nullable = false, updatable = false)
     private Instant expiresAt;
+    
+    @Column(nullable = false, updatable = false)
+    private UUID familyId;
+    
+    private boolean revoked = false;
 
     public boolean isExpired() {
         return Instant.now().isAfter(expiresAt);
@@ -44,7 +49,7 @@ public class RefreshToken {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof RefreshToken that)) return false;
-        return Objects.equals(id, that.id) && Objects.equals(token, that.token) && Objects.equals(userId, that.userId)  && Objects.equals(issuedAt, that.issuedAt) && Objects.equals(expiresAt, that.expiresAt);
+        return Objects.equals(id, that.id) && Objects.equals(token, that.token) && Objects.equals(userId, that.userId) && Objects.equals(issuedAt, that.issuedAt) && Objects.equals(expiresAt, that.expiresAt);
     }
 
     @Override

@@ -47,5 +47,10 @@ public class CustomMessages {
     public static final String ACCOUNT_VERIFIED_SUCCESSFULLY = "Account verified successfully";
     public static final String ACCOUNT_VERIFICATION_FAILED = "Account verification failed";
     public static final String ACCOUNT_DISABLED = "Account is disabled. Please contact support for assistance.";
+    
+    public static final String LOGGED_OUT_SUCCESSFULLY = "Logged out successfully";
+    public static final String UNDER_AGE = "You must be at least 18 years old to use this service";
+    public static final String PASSWORD_RESET_EMAIL_SENT = "Password reset email sent. Please check your inbox.";
+    public static final String INVALID_OR_EXPIRED_RESET_TOKEN = "Invalid or expired reset token";
 
 }

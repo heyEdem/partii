@@ -12,8 +12,18 @@ import java.util.List;
 @Builder
 public record SecurityUser(User user) implements UserDetails {
 
+    public Long getUserId() {
+        return user.getId();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (user.isAdmin()) {
+            return List.of(
+                new SimpleGrantedAuthority("ROLE_USER"),
+                new SimpleGrantedAuthority("ROLE_ADMIN")
+            );
+        }
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));
     }
 

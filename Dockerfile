@@ -19,6 +19,9 @@ RUN mvn clean package -DskipTests
 # Stage 2: Create the runtime image
 FROM eclipse-temurin:21-jre-alpine
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # Add metadata
 LABEL maintainer="edem"
 LABEL application="partii"
@@ -43,7 +46,7 @@ EXPOSE 8080
 
 # Health check (optional but recommended for production)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD curl -f http://localhost:8080/api/partii || exit 1
+  CMD curl -f http://localhost:8080/.well-known/jwks.json || exit 1
 
 # JVM tuning for containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
