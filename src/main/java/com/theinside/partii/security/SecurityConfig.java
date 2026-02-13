@@ -58,7 +58,20 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                                 .oidcUserService(customOidcUserService)))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                // Security Headers
+                .headers(headers -> headers
+                        .contentSecurityPolicy(csp -> csp
+                                .policyDirectives("default-src 'self'; " +
+                                        "script-src 'self'; " +
+                                        "style-src 'self' 'unsafe-inline'; " +
+                                        "img-src 'self' data: https:; " +
+                                        "font-src 'self' data:; " +
+                                        "connect-src 'self'; " +
+                                        "frame-ancestors 'none'"))
+                        .frameOptions(frame -> frame.deny())
+                        .contentTypeOptions(withDefaults())  // Enables X-Content-Type-Options: nosniff
+                );
 
         return http.build();
     }

@@ -113,13 +113,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse login(LoginRequest request) {
-        log.info("Processing login for email: {}", request.email());
+        log.info("Processing login attempt");
 
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new UnauthorizedException(BAD_CREDENTIALS_MESSAGE));
 
         // Check if account is enabled
         if (!user.isEnabled()) {
+            log.warn("Login attempt for disabled account: {}", user.getId());
             throw new UnauthorizedException(ACCOUNT_DISABLED);
         }
 
@@ -128,11 +129,12 @@ public class AuthServiceImpl implements AuthService {
             throw new UnauthorizedException(BAD_CREDENTIALS_MESSAGE);
         }
 
-        // Check if account is verified
+        // Check if account is verified - use same generic message to prevent enumeration
         if (!user.isVerified()) {
+            log.warn("Login attempt for unverified account: {}", user.getId());
             // Resend OTP if not verified
             sendVerificationEmail(user);
-            throw new UnauthorizedException(UNVERIFIED_ACCOUNT);
+            throw new UnauthorizedException(BAD_CREDENTIALS_MESSAGE);
         }
 
         var authToken = tokenManager.issueToken(user);
@@ -151,10 +153,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public GenericMessageResponse verifyEmail(VerifyEmailRequest request) {
-        log.info("Verifying email: {}", request.email());
+        log.info("Processing email verification request");
 
         User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND));
+                .orElseThrow(() -> new VerificationFailedException(OTP_VERIFICATION_FAILED_MESSAGE));
 
         EmailVerificationToken token = emailVerificationTokenRepository
                 .findFirstByEmailAndUsedFalseAndExpiresAtAfterOrderByCreatedAtDesc(
@@ -184,7 +186,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public GenericMessageResponse resendOtp(String email) {
-        log.info("Resending OTP for email: {}", email);
+        log.info("Processing OTP resend request");
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException(USER_NOT_FOUND));
@@ -197,6 +199,7 @@ public class AuthServiceImpl implements AuthService {
         Instant oneHourAgo = Instant.now().minus(1, ChronoUnit.HOURS);
         long recentRequests = emailVerificationTokenRepository.countByEmailAndCreatedAtAfter(email, oneHourAgo);
         if (recentRequests >= MAX_OTP_REQUESTS_PER_HOUR) {
+            log.warn("Rate limit exceeded for OTP resend: {}", user.getId());
             throw new ValidationException("Too many requests. Please try again later.");
         }
 

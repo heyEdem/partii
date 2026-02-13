@@ -33,28 +33,28 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signup(@Valid @RequestBody SignupRequest request) {
-        log.info("Signup request received for email: {}", request.email());
+        log.info("Signup request received");
         AuthResponse response = authService.signup(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        log.info("Login request received for email: {}", request.email());
+        log.info("Login request received");
         AuthResponse response = authService.login(request);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/verify-email")
     public ResponseEntity<GenericMessageResponse> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
-        log.info("Email verification request received for email: {}", request.email());
+        log.info("Email verification request received");
         GenericMessageResponse response = authService.verifyEmail(request);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/resend-otp")
     public ResponseEntity<GenericMessageResponse> resendOtp(@Valid @RequestBody ResendOtpRequest request) {
-        log.info("Resend OTP request received for email: {}", request.email());
+        log.info("Resend OTP request received");
         GenericMessageResponse response = authService.resendOtp(request.email());
         return ResponseEntity.ok(response);
     }
@@ -75,17 +75,17 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<GenericMessageResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        log.info("Forgot password request received for email: {}", request.email());
+        log.info("Forgot password request received");
         GenericMessageResponse response = authService.forgotPassword(request.email());
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<GenericMessageResponse> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        log.info("Reset password request received for email: {}", request.email());
+        log.info("Reset password request received");
         GenericMessageResponse response = authService.resetPassword(
-                request.email(), 
-                request.token(), 
+                request.email(),
+                request.token(),
                 request.newPassword()
         );
         return ResponseEntity.ok(response);

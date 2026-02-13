@@ -1,88 +1,88 @@
 package com.theinside.partii.service.notification;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import com.theinside.partii.config.AppProperties;
+import com.theinside.partii.config.ResendProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
-
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+
+import java.util.Map;
 
 /**
- * SMTP-based implementation of NotificationService using Spring's JavaMailSender.
- * Active when 'smtp' profile is enabled - ideal for development without a custom domain.
+ * Resend-based implementation of NotificationService.
+ * Active when 'resend' profile is enabled - ideal for production with custom domain.
  */
 @Service
-@Slf4j
 @RequiredArgsConstructor
-@Profile("prod")
-public class SmtpNotificationService implements NotificationService {
+@Slf4j
+//@Profile("dev")
+public class ResendNotificationService implements NotificationService {
 
-    private final JavaMailSender mailSender;
+    private final ResendProperties resendProperties;
+    private final AppProperties appProperties;
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
-
-    @Value("${partii.mail.from-name:Partii}")
-    private String fromName;
+    private static final String RESEND_API_URL = "https://api.resend.com/emails";
 
     @Override
     @Async
     public void sendOtpEmail(String to, String otpCode, String userName) {
         String subject = "Your Partii verification code";
-        String html = buildOtpEmailHtml(otpCode, userName);
+        String htmlContent = buildOtpEmailHtml(otpCode, userName);
 
-        sendEmailWithRetry(to, subject, html, "OTP");
+        sendEmail(to, subject, htmlContent);
+        log.info("OTP email sent to: {}", to);
     }
 
     @Override
     @Async
     public void sendWelcomeEmail(String to, String userName) {
         String subject = "Welcome to Partii!";
-        String html = buildWelcomeEmailHtml(userName);
+        String htmlContent = buildWelcomeEmailHtml(userName);
 
-        sendEmailWithRetry(to, subject, html, "Welcome");
+        sendEmail(to, subject, htmlContent);
+        log.info("Welcome email sent to: {}", to);
     }
 
     @Override
     @Async
     public void sendPasswordResetEmail(String to, String resetToken, String userName) {
+        String resetLink = appProperties.getPasswordResetUrl() + "?token=" + resetToken;
+
         String subject = "Reset your Partii password";
-        String html = buildPasswordResetEmailHtml(resetToken, userName);
+        String htmlContent = buildPasswordResetEmailHtml(userName, resetLink);
 
-        sendEmailWithRetry(to, subject, html, "PasswordReset");
+        sendEmail(to, subject, htmlContent);
+        log.info("Password reset email sent to: {}", to);
     }
 
-    public void sendEmailWithRetry(String to, String subject, String html, String emailType) {
+    private void sendEmail(String toEmail, String subject, String htmlContent) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            RestClient restClient = RestClient.create();
 
-            helper.setFrom(fromEmail, fromName);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(html, true);
+            Map<String, Object> requestBody = Map.of(
+                    "from", resendProperties.fromEmail(),
+                    "to", toEmail,
+                    "subject", subject,
+                    "html", htmlContent
+            );
 
-            mailSender.send(message);
-            log.info("{} email sent to {}", emailType, to);
+            restClient.post()
+                    .uri(RESEND_API_URL)
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + resendProperties.apiKey())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .toBodilessEntity();
 
-        } catch (MessagingException | MailException e) {
-            log.warn("Attempt to send {} email to {} failed: {}", emailType, to, e.getMessage());
-            throw new EmailSendException("Failed to send " + emailType + " email to " + to, e);
+            log.debug("Email sent successfully to: {}", toEmail);
         } catch (Exception e) {
-            log.error("Unexpected error sending {} email to {}: {}", emailType, to, e.getMessage());
-            throw new EmailSendException("Failed to send " + emailType + " email to " + to, e);
-        }
-    }
-
-    public static class EmailSendException extends RuntimeException {
-        public EmailSendException(String message, Throwable cause) {
-            super(message, cause);
+            log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
+            // Don't throw - email sending should not block the main flow
         }
     }
 
@@ -130,14 +130,14 @@ public class SmtpNotificationService implements NotificationService {
                         <li style="margin-bottom: 8px;">Connect with other attendees</li>
                     </ul>
 
-                    <a href="https://partii.com" style="display: inline-block; background: #111; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 500;">Get Started</a>
+                    <p style="margin: 0; color: #999; font-size: 14px;">Welcome to the Partii community!</p>
                 </div>
             </body>
             </html>
             """.formatted(userName);
     }
 
-    private String buildPasswordResetEmailHtml(String resetToken, String userName) {
+    private String buildPasswordResetEmailHtml(String userName, String resetLink) {
         return """
             <!DOCTYPE html>
             <html>
@@ -150,12 +150,15 @@ public class SmtpNotificationService implements NotificationService {
                     <h1 style="margin: 0 0 8px; font-size: 24px; color: #111;">Reset your password</h1>
                     <p style="margin: 0 0 32px; color: #666; font-size: 16px;">Hi %s, we received a request to reset your password. Click the button below to choose a new one:</p>
 
-                    <a href="https://partii.com/reset-password?token=%s" style="display: inline-block; background: #111; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 500; margin-bottom: 32px;">Reset Password</a>
+                    <a href="%s" style="display: inline-block; background: #111; color: white; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 500; margin-bottom: 32px;">Reset Password</a>
 
-                    <p style="margin: 24px 0 0; color: #999; font-size: 14px;">This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>
+                    <p style="margin: 0 0 24px; color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
+                    <p style="margin: 0 0 32px; word-break: break-all; color: #999; font-size: 12px;">%s</p>
+
+                    <p style="margin: 0; color: #999; font-size: 14px;">This link expires in 1 hour. If you didn't request this, you can safely ignore this email.</p>
                 </div>
             </body>
             </html>
-            """.formatted(userName, resetToken);
+            """.formatted(userName, resetLink, resetLink);
     }
 }
