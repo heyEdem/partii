@@ -1,9 +1,6 @@
 package com.theinside.partii.service;
 
-import com.theinside.partii.dto.CreateEventRequest;
-import com.theinside.partii.dto.CursorPage;
-import com.theinside.partii.dto.EventResponse;
-import com.theinside.partii.dto.UpdateEventRequest;
+import com.theinside.partii.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -102,4 +99,21 @@ public interface EventService {
      * @return cursor page of event responses
      */
     CursorPage<EventResponse> getAllEventsKeyset(String cursor, int limit);
+
+    /**
+     * Search events with dynamic filters and sorting.
+     *
+     * @param searchRequest the search criteria
+     * @param pageable      pagination and sorting information
+     * @return page of matching event responses
+     */
+    Page<EventResponse> searchEvents(EventSearchRequest searchRequest, Pageable pageable);
+
+    /**
+     * List all public and visible events.
+     *
+     * @param pageable pagination information
+     * @return page of event responses
+     */
+    Page<EventResponse> getPublicEvents(Pageable pageable);
 }

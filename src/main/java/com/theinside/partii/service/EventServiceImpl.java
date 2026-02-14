@@ -12,6 +12,7 @@ import com.theinside.partii.mapper.EventMapper;
 import com.theinside.partii.repository.ContributionItemRepository;
 import com.theinside.partii.repository.EventRepository;
 import com.theinside.partii.repository.UserRepository;
+import com.theinside.partii.specification.EventSpecifications;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Limit;
@@ -130,6 +131,24 @@ public class EventServiceImpl implements EventService {
     public Page<EventResponse> getAllEvents(Pageable pageable) {
         return eventRepository.findAll(pageable)
             .map(this::mapToEventResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EventResponse> getPublicEvents(Pageable pageable) {
+        return eventRepository.findByVisibility(com.theinside.partii.enums.EventVisibility.PUBLIC, pageable)
+            .map(this::mapToEventResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EventResponse> searchEvents(EventSearchRequest searchRequest, Pageable pageable) {
+        log.debug("Searching events with filters: {}", searchRequest);
+        Page<Event> events = eventRepository.findAll(
+            EventSpecifications.fromSearchRequest(searchRequest),
+            pageable
+        );
+        return events.map(this::mapToEventResponse);
     }
 
     @Override

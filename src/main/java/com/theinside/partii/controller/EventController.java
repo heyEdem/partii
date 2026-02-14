@@ -1,9 +1,6 @@
 package com.theinside.partii.controller;
 
-import com.theinside.partii.dto.CreateEventRequest;
-import com.theinside.partii.dto.CursorPage;
-import com.theinside.partii.dto.EventResponse;
-import com.theinside.partii.dto.UpdateEventRequest;
+import com.theinside.partii.dto.*;
 import com.theinside.partii.security.SecurityUser;
 import com.theinside.partii.service.EventService;
 import jakarta.validation.Valid;
@@ -11,6 +8,9 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -60,6 +60,25 @@ public class EventController {
         log.info("Creating new event by user: {}", user.getUserId());
         EventResponse response = eventService.createEvent(user.getUserId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    /**
+     * POST /api/events/search
+     * Search events with dynamic filters and sorting.
+     * Supports filtering by type, date range, budget, location, keywords, etc.
+     */
+    @PostMapping("/search")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<EventResponse>> searchEvents(
+        @Valid @RequestBody(required = false) EventSearchRequest searchRequest,
+        @PageableDefault(size = 20, sort = "eventDate") Pageable pageable
+    ) {
+        EventSearchRequest request = searchRequest != null ? searchRequest : new EventSearchRequest(
+            null, null, null, null, null, null, null, null, null, null, null, null, null
+        );
+        log.debug("Searching events with filters: {}", request);
+        Page<EventResponse> events = eventService.searchEvents(request, pageable);
+        return ResponseEntity.ok(events);
     }
 
     /**

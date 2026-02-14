@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -43,7 +41,6 @@ services:
   app:
     build: .
     container_name: partii-app
-    profiles: ["dev", "prod"]
     restart: unless-stopped
     ports:
       - "8080:8080"
