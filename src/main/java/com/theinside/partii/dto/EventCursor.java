@@ -2,7 +2,6 @@ package com.theinside.partii.dto;
 
 import java.time.LocalDateTime;
 import java.util.Base64;
-import java.util.UUID;
 
 /**
  * Cursor for keyset pagination.
@@ -10,7 +9,7 @@ import java.util.UUID;
  */
 public record EventCursor(
     LocalDateTime eventDate,
-    UUID id
+    Long id
 ) {
     /**
      * Encode cursor to Base64 string for API responses.
@@ -35,7 +34,7 @@ public record EventCursor(
                 throw new IllegalArgumentException("Invalid cursor format");
             }
             LocalDateTime eventDate = LocalDateTime.parse(parts[0]);
-            UUID id = UUID.fromString(parts[1]);
+            Long id = (long) Integer.parseInt(parts[1]);
             return new EventCursor(eventDate, id);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid cursor: " + encodedCursor, e);

@@ -7,7 +7,7 @@ import com.theinside.partii.dto.UpdateEventRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.UUID;
+import java.util.List;
 
 /**
  * Service interface for event operations.
@@ -29,7 +29,7 @@ public interface EventService {
      * @param eventId the event ID
      * @return the event response
      */
-    EventResponse getEvent(UUID eventId);
+    EventResponse getEvent(Long eventId);
 
     /**
      * Get an event by its private link code.
@@ -56,7 +56,7 @@ public interface EventService {
      * @param request the partial update request
      * @return the updated event response
      */
-    EventResponse updateEvent(UUID eventId, Long userId, UpdateEventRequest request);
+    EventResponse updateEvent(Long eventId, Long userId, UpdateEventRequest request);
 
     /**
      * Delete an event.
@@ -64,7 +64,7 @@ public interface EventService {
      * @param eventId the event ID
      * @param userId  the ID of the user deleting the event
      */
-    void deleteEvent(UUID eventId, Long userId);
+    void deleteEvent(Long eventId, Long userId);
 
     /**
      * Publish an event (change status to ACTIVE).
@@ -73,7 +73,7 @@ public interface EventService {
      * @param userId  the ID of the user publishing the event
      * @return the updated event response
      */
-    EventResponse publishEvent(UUID eventId, Long userId);
+    EventResponse publishEvent(Long eventId, Long userId);
 
     /**
      * Cancel an event.
@@ -83,7 +83,7 @@ public interface EventService {
      * @param reason  the cancellation reason
      * @return the updated event response
      */
-    EventResponse cancelEvent(UUID eventId, Long userId, String reason);
+    EventResponse cancelEvent(Long eventId, Long userId, String reason);
 
     /**
      * List public events using keyset pagination (significantly faster than offset).
@@ -102,4 +102,12 @@ public interface EventService {
      * @return cursor page of event responses
      */
     CursorPage<EventResponse> getAllEventsKeyset(String cursor, int limit);
+
+    Page<EventResponse> getMyOrganizedEvents(Long userId, Pageable pageable);
+
+    List<EventResponse> getMyAttendingEvents(Long userId);
+
+    List<EventResponse> getMyPendingEvents(Long userId);
+
+    Page<EventResponse> getMyPastEvents(Long userId, Pageable pageable);
 }

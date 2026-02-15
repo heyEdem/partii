@@ -13,33 +13,32 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Repository for EventAttendee entity with custom query methods.
  */
 @Repository
-public interface EventAttendeeRepository extends JpaRepository<EventAttendee, UUID> {
+public interface EventAttendeeRepository extends JpaRepository<EventAttendee, Long> {
 
     // ===== Basic Queries =====
 
-    List<EventAttendee> findByEventId(UUID eventId);
+    List<EventAttendee> findByEventId(Long eventId);
 
-    Page<EventAttendee> findByEventId(UUID eventId, Pageable pageable);
+    Page<EventAttendee> findByEventId(Long eventId, Pageable pageable);
 
     List<EventAttendee> findByUserId(Long userId);
 
     Page<EventAttendee> findByUserId(Long userId, Pageable pageable);
 
-    Optional<EventAttendee> findByEventIdAndUserId(UUID eventId, Long userId);
+    Optional<EventAttendee> findByEventIdAndUserId(Long eventId, Long userId);
 
-    boolean existsByEventIdAndUserId(UUID eventId, Long userId);
+    boolean existsByEventIdAndUserId(Long eventId, Long userId);
 
     // ===== Status Queries =====
 
-    List<EventAttendee> findByEventIdAndStatus(UUID eventId, AttendeeStatus status);
+    List<EventAttendee> findByEventIdAndStatus(Long eventId, AttendeeStatus status);
 
-    Page<EventAttendee> findByEventIdAndStatus(UUID eventId, AttendeeStatus status, Pageable pageable);
+    Page<EventAttendee> findByEventIdAndStatus(Long eventId, AttendeeStatus status, Pageable pageable);
 
     List<EventAttendee> findByUserIdAndStatus(Long userId, AttendeeStatus status);
 
@@ -50,22 +49,22 @@ public interface EventAttendeeRepository extends JpaRepository<EventAttendee, UU
         ORDER BY ea.joinedAt ASC
         """)
     List<EventAttendee> findByEventIdAndStatusIn(
-        @Param("eventId") UUID eventId,
+        @Param("eventId") Long eventId,
         @Param("statuses") List<AttendeeStatus> statuses
     );
 
     // ===== Count Queries =====
 
-    long countByEventId(UUID eventId);
+    long countByEventId(Long eventId);
 
-    long countByEventIdAndStatus(UUID eventId, AttendeeStatus status);
+    long countByEventIdAndStatus(Long eventId, AttendeeStatus status);
 
     @Query("SELECT COUNT(ea) FROM EventAttendee ea WHERE ea.event.id = :eventId AND ea.status = 'APPROVED'")
-    long countApprovedAttendees(@Param("eventId") UUID eventId);
+    long countApprovedAttendees(@Param("eventId") Long eventId);
 
     // ===== Payment Queries =====
 
-    List<EventAttendee> findByEventIdAndPaymentStatus(UUID eventId, PaymentStatus paymentStatus);
+    List<EventAttendee> findByEventIdAndPaymentStatus(Long eventId, PaymentStatus paymentStatus);
 
     @Query("""
         SELECT ea FROM EventAttendee ea
@@ -74,21 +73,21 @@ public interface EventAttendeeRepository extends JpaRepository<EventAttendee, UU
         AND ea.paymentStatus != 'PAID'
         ORDER BY ea.joinedAt ASC
         """)
-    List<EventAttendee> findUnpaidAttendees(@Param("eventId") UUID eventId);
+    List<EventAttendee> findUnpaidAttendees(@Param("eventId") Long eventId);
 
     @Query("""
         SELECT SUM(ea.amountPaid) FROM EventAttendee ea
         WHERE ea.event.id = :eventId
         AND ea.status = 'APPROVED'
         """)
-    BigDecimal sumAmountPaidByEvent(@Param("eventId") UUID eventId);
+    BigDecimal sumAmountPaidByEvent(@Param("eventId") Long eventId);
 
     @Query("""
         SELECT SUM(ea.paymentAmount) FROM EventAttendee ea
         WHERE ea.event.id = :eventId
         AND ea.status = 'APPROVED'
         """)
-    BigDecimal sumPaymentAmountByEvent(@Param("eventId") UUID eventId);
+    BigDecimal sumPaymentAmountByEvent(@Param("eventId") Long eventId);
 
     // ===== Waitlist Queries =====
 
@@ -98,7 +97,7 @@ public interface EventAttendeeRepository extends JpaRepository<EventAttendee, UU
         AND ea.status = 'WAITLIST'
         ORDER BY ea.joinedAt ASC
         """)
-    List<EventAttendee> findWaitlistByEventId(@Param("eventId") UUID eventId);
+    List<EventAttendee> findWaitlistByEventId(@Param("eventId") Long eventId);
 
     @Query("""
         SELECT ea FROM EventAttendee ea
@@ -107,7 +106,7 @@ public interface EventAttendeeRepository extends JpaRepository<EventAttendee, UU
         ORDER BY ea.joinedAt ASC
         LIMIT 1
         """)
-    Optional<EventAttendee> findFirstInWaitlist(@Param("eventId") UUID eventId);
+    Optional<EventAttendee> findFirstInWaitlist(@Param("eventId") Long eventId);
 
     // ===== User Event Participation =====
 
@@ -176,7 +175,7 @@ public interface EventAttendeeRepository extends JpaRepository<EventAttendee, UU
 
     // ===== Deletion =====
 
-    void deleteByEventId(UUID eventId);
+    void deleteByEventId(Long eventId);
 
-    void deleteByEventIdAndUserId(UUID eventId, Long userId);
+    void deleteByEventIdAndUserId(Long eventId, Long userId);
 }
