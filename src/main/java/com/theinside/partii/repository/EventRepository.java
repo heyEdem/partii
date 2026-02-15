@@ -16,13 +16,12 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Repository for Event entity with custom query methods.
  */
 @Repository
-public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecificationExecutor<Event> {
+public interface EventRepository extends JpaRepository<Event, Long>, JpaSpecificationExecutor<Event> {
 
     // ===== Basic Queries =====
 
@@ -249,7 +248,7 @@ public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecific
     List<Event> findPublicEventsKeyset(
         @Param("now") LocalDateTime now,
         @Param("afterDate") LocalDateTime afterDate,
-        @Param("afterId") UUID afterId,
+        @Param("afterId") Long afterId,
         org.springframework.data.domain.Limit limit
     );
 
@@ -264,7 +263,7 @@ public interface EventRepository extends JpaRepository<Event, UUID>, JpaSpecific
         """)
     List<Event> findAllEventsKeyset(
         @Param("afterDate") java.time.Instant afterDate,
-        @Param("afterId") UUID afterId,
+        @Param("afterId") Long afterId,
         org.springframework.data.domain.Limit limit
     );
 }

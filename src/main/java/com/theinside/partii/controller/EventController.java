@@ -11,13 +11,16 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
+import java.util.List;
 
 /**
  * REST controller for event operations.
@@ -68,7 +71,7 @@ public class EventController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<EventResponse> getEvent(@PathVariable UUID id) {
+    public ResponseEntity<EventResponse> getEvent(@PathVariable Long id) {
         log.debug("Fetching event: {}", id);
         EventResponse response = eventService.getEvent(id);
         return ResponseEntity.ok(response);
@@ -81,7 +84,7 @@ public class EventController {
     @PatchMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<EventResponse> updateEvent(
-        @PathVariable UUID id,
+        @PathVariable Long id,
         @AuthenticationPrincipal SecurityUser user,
         @Valid @RequestBody UpdateEventRequest request
     ) {
@@ -97,7 +100,7 @@ public class EventController {
     @DeleteMapping("/{id}/delete")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> deleteEvent(
-        @PathVariable UUID id,
+        @PathVariable Long id,
         @AuthenticationPrincipal SecurityUser user
     ) {
         log.info("Deleting event: {} by user: {}", id, user.getUserId());
@@ -112,7 +115,7 @@ public class EventController {
     @PatchMapping("/{id}/publish")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<EventResponse> publishEvent(
-        @PathVariable UUID id,
+        @PathVariable Long id,
         @AuthenticationPrincipal SecurityUser user
     ) {
         log.info("Publishing event: {} by user: {}", id, user.getUserId());
@@ -127,7 +130,7 @@ public class EventController {
     @PatchMapping("/{id}/cancel")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<EventResponse> cancelEvent(
-        @PathVariable UUID id,
+        @PathVariable Long id,
         @AuthenticationPrincipal SecurityUser user,
         @RequestBody(required = false) CancelEventRequest cancelRequest
     ) {
@@ -149,6 +152,46 @@ public class EventController {
         log.debug("Fetching event by private code");
         EventResponse response = eventService.getEventByPrivateLinkCode(code);
         return ResponseEntity.ok(response);
+    }
+
+    // ===== My Events Endpoints =====
+
+    @GetMapping("/my-events/organized")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<EventResponse>> getMyOrganizedEvents(
+        @AuthenticationPrincipal SecurityUser user,
+        @PageableDefault(size = 20) Pageable pageable
+    ) {
+        Page<EventResponse> events = eventService.getMyOrganizedEvents(user.getUserId(), pageable);
+        return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/my-events/attending")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<EventResponse>> getMyAttendingEvents(
+        @AuthenticationPrincipal SecurityUser user
+    ) {
+        List<EventResponse> events = eventService.getMyAttendingEvents(user.getUserId());
+        return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/my-events/pending")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<EventResponse>> getMyPendingEvents(
+        @AuthenticationPrincipal SecurityUser user
+    ) {
+        List<EventResponse> events = eventService.getMyPendingEvents(user.getUserId());
+        return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/my-events/past")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<EventResponse>> getMyPastEvents(
+        @AuthenticationPrincipal SecurityUser user,
+        @PageableDefault(size = 20) Pageable pageable
+    ) {
+        Page<EventResponse> events = eventService.getMyPastEvents(user.getUserId(), pageable);
+        return ResponseEntity.ok(events);
     }
 
     /**

@@ -7,13 +7,12 @@ import com.theinside.partii.enums.EventVisibility;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * Response DTO for event information.
  */
 public record EventResponse(
-    UUID id,
+    Long id,
     Long organizerId,
     String organizerDisplayName,
     String title,

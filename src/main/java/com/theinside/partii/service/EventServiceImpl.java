@@ -10,6 +10,7 @@ import com.theinside.partii.exception.NotFoundException;
 import com.theinside.partii.exception.ResourceNotFoundException;
 import com.theinside.partii.mapper.EventMapper;
 import com.theinside.partii.repository.ContributionItemRepository;
+import com.theinside.partii.repository.EventAttendeeRepository;
 import com.theinside.partii.repository.EventRepository;
 import com.theinside.partii.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Implementation of EventService.
@@ -36,6 +36,7 @@ import java.util.UUID;
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
+    private final EventAttendeeRepository eventAttendeeRepository;
     private final ContributionItemRepository contributionItemRepository;
     private final UserRepository userRepository;
     private final EventMapper eventMapper;
@@ -95,7 +96,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public EventResponse getEvent(UUID eventId) {
+    public EventResponse getEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
             .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
         return mapToEventResponse(event);
@@ -134,7 +135,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public EventResponse updateEvent(UUID eventId, Long userId, UpdateEventRequest request) {
+    public EventResponse updateEvent(Long eventId, Long userId, UpdateEventRequest request) {
         Event event = eventRepository.findById(eventId)
             .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
@@ -163,7 +164,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public void deleteEvent(UUID eventId, Long userId) {
+    public void deleteEvent(Long eventId, Long userId) {
         Event event = eventRepository.findById(eventId)
             .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
@@ -183,7 +184,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public EventResponse publishEvent(UUID eventId, Long userId) {
+    public EventResponse publishEvent(Long eventId, Long userId) {
         Event event = eventRepository.findById(eventId)
             .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
@@ -206,7 +207,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public EventResponse cancelEvent(UUID eventId, Long userId, String reason) {
+    public EventResponse cancelEvent(Long eventId, Long userId, String reason) {
         Event event = eventRepository.findById(eventId)
             .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
@@ -233,7 +234,7 @@ public class EventServiceImpl implements EventService {
     public CursorPage<EventResponse> getPublicEvents(String cursorString, int limit) {
         EventCursor cursor = cursorString != null ? EventCursor.decode(cursorString) : null;
         LocalDateTime afterDate = cursor != null ? cursor.eventDate() : null;
-        UUID afterId = cursor != null ? cursor.id() : null;
+        Long afterId = cursor != null ? cursor.id() : null;
 
         // Fetch limit+1 to determine if there's a next page
         List<Event> events = eventRepository.findPublicEventsKeyset(
@@ -271,7 +272,7 @@ public class EventServiceImpl implements EventService {
         java.time.Instant afterDate = cursor != null
             ? cursor.eventDate().atZone(java.time.ZoneId.systemDefault()).toInstant()
             : null;
-        UUID afterId = cursor != null ? cursor.id() : null;
+        Long afterId = cursor != null ? cursor.id() : null;
 
         List<Event> events = eventRepository.findAllEventsKeyset(
             afterDate,
@@ -299,6 +300,36 @@ public class EventServiceImpl implements EventService {
             .toList();
 
         return CursorPage.of(responses, nextCursor, limit);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EventResponse> getMyOrganizedEvents(Long userId, Pageable pageable) {
+        return eventRepository.findByOrganizerId(userId, pageable)
+            .map(this::mapToEventResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventResponse> getMyAttendingEvents(Long userId) {
+        return eventAttendeeRepository.findActiveParticipationsByUser(userId).stream()
+            .map(ea -> mapToEventResponse(ea.getEvent()))
+            .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventResponse> getMyPendingEvents(Long userId) {
+        return eventAttendeeRepository.findPendingRequestsByUser(userId).stream()
+            .map(ea -> mapToEventResponse(ea.getEvent()))
+            .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EventResponse> getMyPastEvents(Long userId, Pageable pageable) {
+        return eventAttendeeRepository.findPastParticipationsByUser(userId, pageable)
+            .map(ea -> mapToEventResponse(ea.getEvent()));
     }
 
     private EventResponse mapToEventResponse(Event event) {
