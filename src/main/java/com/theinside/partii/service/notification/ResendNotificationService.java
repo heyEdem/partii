@@ -120,7 +120,7 @@ public class ResendNotificationService implements NotificationService {
             </head>
             <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 40px 20px; background-color: #f5f5f5;">
                 <div style="max-width: 480px; margin: 0 auto; background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                    <h1 style="margin: 0 0 8px; font-size: 24px; color: #111;">Welcome to the Partii!!</h1>
+                    <h1 style="margin: 0 0 8px; font-size: 24px; color: #111;">Welcome to the Partii!</h1>
                     <p style="margin: 0 0 24px; color: #666; font-size: 16px;">Hi %s, your account is now verified and ready to go.</p>
 
                     <p style="margin: 0 0 24px; color: #666; font-size: 16px;">You can now:</p>

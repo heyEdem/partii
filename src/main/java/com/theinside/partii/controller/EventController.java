@@ -1,7 +1,9 @@
 package com.theinside.partii.controller;
 
-import com.theinside.partii.dto.*;
-import com.theinside.partii.enums.EventStatus;
+import com.theinside.partii.dto.CreateEventRequest;
+import com.theinside.partii.dto.CursorPage;
+import com.theinside.partii.dto.EventResponse;
+import com.theinside.partii.dto.UpdateEventRequest;
 import com.theinside.partii.security.SecurityUser;
 import com.theinside.partii.service.EventService;
 import jakarta.validation.Valid;
@@ -17,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * REST controller for event operations.
@@ -59,43 +63,6 @@ public class EventController {
         log.info("Creating new event by user: {}", user.getUserId());
         EventResponse response = eventService.createEvent(user.getUserId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    /**
-     * POST /api/events/search
-     * Search events with dynamic filters and sorting.
-     * Supports filtering by type, date range, budget, location, keywords, etc.
-     */
-    @PostMapping("/search")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<EventResponse>> searchEvents(
-        @Valid @RequestBody(required = false) EventSearchRequest searchRequest,
-        @PageableDefault(size = 20, sort = "eventDate") Pageable pageable
-    ) {
-        EventSearchRequest request = searchRequest != null ? searchRequest : new EventSearchRequest(
-            null, null, null, null, null, null, null, null, null, null, null, null, null
-        );
-        log.debug("Searching events with filters: {}", request);
-        Page<EventResponse> events = eventService.searchEvents(request, pageable);
-        return ResponseEntity.ok(events);
-    }
-
-    /**
-     * GET /api/events/my-events
-     * List events belonging to the authenticated user (organized and/or attending).
-     * Supports optional filters by event status and user role.
-     */
-    @GetMapping("/my-events")
-    @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Page<EventResponse>> getMyEvents(
-        @AuthenticationPrincipal SecurityUser user,
-        @RequestParam(required = false) EventStatus status,
-        @RequestParam(required = false) String role,
-        @PageableDefault(size = 20, sort = "eventDate") Pageable pageable
-    ) {
-        log.debug("Fetching my events for user: {}, status: {}, role: {}", user.getUserId(), status, role);
-        Page<EventResponse> events = eventService.getMyEvents(user.getUserId(), status, role, pageable);
-        return ResponseEntity.ok(events);
     }
 
     /**
@@ -185,6 +152,46 @@ public class EventController {
         log.debug("Fetching event by private code");
         EventResponse response = eventService.getEventByPrivateLinkCode(code);
         return ResponseEntity.ok(response);
+    }
+
+    // ===== My Events Endpoints =====
+
+    @GetMapping("/my-events/organized")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<EventResponse>> getMyOrganizedEvents(
+        @AuthenticationPrincipal SecurityUser user,
+        @PageableDefault(size = 20) Pageable pageable
+    ) {
+        Page<EventResponse> events = eventService.getMyOrganizedEvents(user.getUserId(), pageable);
+        return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/my-events/attending")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<EventResponse>> getMyAttendingEvents(
+        @AuthenticationPrincipal SecurityUser user
+    ) {
+        List<EventResponse> events = eventService.getMyAttendingEvents(user.getUserId());
+        return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/my-events/pending")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<EventResponse>> getMyPendingEvents(
+        @AuthenticationPrincipal SecurityUser user
+    ) {
+        List<EventResponse> events = eventService.getMyPendingEvents(user.getUserId());
+        return ResponseEntity.ok(events);
+    }
+
+    @GetMapping("/my-events/past")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Page<EventResponse>> getMyPastEvents(
+        @AuthenticationPrincipal SecurityUser user,
+        @PageableDefault(size = 20) Pageable pageable
+    ) {
+        Page<EventResponse> events = eventService.getMyPastEvents(user.getUserId(), pageable);
+        return ResponseEntity.ok(events);
     }
 
     /**

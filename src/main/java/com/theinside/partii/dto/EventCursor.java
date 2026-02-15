@@ -34,7 +34,7 @@ public record EventCursor(
                 throw new IllegalArgumentException("Invalid cursor format");
             }
             LocalDateTime eventDate = LocalDateTime.parse(parts[0]);
-            Long id = Long.parseLong(parts[1]);
+            Long id = (long) Integer.parseInt(parts[1]);
             return new EventCursor(eventDate, id);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid cursor: " + encodedCursor, e);

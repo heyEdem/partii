@@ -10,10 +10,9 @@ import com.theinside.partii.exception.NotFoundException;
 import com.theinside.partii.exception.ResourceNotFoundException;
 import com.theinside.partii.mapper.EventMapper;
 import com.theinside.partii.repository.ContributionItemRepository;
+import com.theinside.partii.repository.EventAttendeeRepository;
 import com.theinside.partii.repository.EventRepository;
 import com.theinside.partii.repository.UserRepository;
-import com.theinside.partii.specification.EventSpecifications;
-import org.springframework.data.jpa.domain.Specification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Limit;
@@ -37,6 +36,7 @@ import java.util.List;
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
+    private final EventAttendeeRepository eventAttendeeRepository;
     private final ContributionItemRepository contributionItemRepository;
     private final UserRepository userRepository;
     private final EventMapper eventMapper;
@@ -131,24 +131,6 @@ public class EventServiceImpl implements EventService {
     public Page<EventResponse> getAllEvents(Pageable pageable) {
         return eventRepository.findAll(pageable)
             .map(this::mapToEventResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<EventResponse> getPublicEvents(Pageable pageable) {
-        return eventRepository.findByVisibility(com.theinside.partii.enums.EventVisibility.PUBLIC, pageable)
-            .map(this::mapToEventResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<EventResponse> searchEvents(EventSearchRequest searchRequest, Pageable pageable) {
-        log.debug("Searching events with filters: {}", searchRequest);
-        Page<Event> events = eventRepository.findAll(
-            EventSpecifications.fromSearchRequest(searchRequest),
-            pageable
-        );
-        return events.map(this::mapToEventResponse);
     }
 
     @Override
@@ -322,15 +304,32 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<EventResponse> getMyEvents(Long userId, EventStatus status, String role, Pageable pageable) {
-        Specification<Event> spec = Specification.where(EventSpecifications.hasOrganizer(userId));
+    public Page<EventResponse> getMyOrganizedEvents(Long userId, Pageable pageable) {
+        return eventRepository.findByOrganizerId(userId, pageable)
+            .map(this::mapToEventResponse);
+    }
 
-        if (status != null) {
-            spec = spec.and(EventSpecifications.hasStatus(status));
-        }
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventResponse> getMyAttendingEvents(Long userId) {
+        return eventAttendeeRepository.findActiveParticipationsByUser(userId).stream()
+            .map(ea -> mapToEventResponse(ea.getEvent()))
+            .toList();
+    }
 
-        Page<Event> events = eventRepository.findAll(spec, pageable);
-        return events.map(this::mapToEventResponse);
+    @Override
+    @Transactional(readOnly = true)
+    public List<EventResponse> getMyPendingEvents(Long userId) {
+        return eventAttendeeRepository.findPendingRequestsByUser(userId).stream()
+            .map(ea -> mapToEventResponse(ea.getEvent()))
+            .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<EventResponse> getMyPastEvents(Long userId, Pageable pageable) {
+        return eventAttendeeRepository.findPastParticipationsByUser(userId, pageable)
+            .map(ea -> mapToEventResponse(ea.getEvent()));
     }
 
     private EventResponse mapToEventResponse(Event event) {

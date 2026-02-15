@@ -1,9 +1,13 @@
 package com.theinside.partii.service;
 
-import com.theinside.partii.dto.*;
-import com.theinside.partii.enums.EventStatus;
+import com.theinside.partii.dto.CreateEventRequest;
+import com.theinside.partii.dto.CursorPage;
+import com.theinside.partii.dto.EventResponse;
+import com.theinside.partii.dto.UpdateEventRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 /**
  * Service interface for event operations.
@@ -99,32 +103,11 @@ public interface EventService {
      */
     CursorPage<EventResponse> getAllEventsKeyset(String cursor, int limit);
 
-    /**
-     * Search events with dynamic filters and sorting.
-     *
-     * @param searchRequest the search criteria
-     * @param pageable      pagination and sorting information
-     * @return page of matching event responses
-     */
-    Page<EventResponse> searchEvents(EventSearchRequest searchRequest, Pageable pageable);
+    Page<EventResponse> getMyOrganizedEvents(Long userId, Pageable pageable);
 
-    /**
-     * List all public and visible events.
-     *
-     * @param pageable pagination information
-     * @return page of event responses
-     */
-    Page<EventResponse> getPublicEvents(Pageable pageable);
+    List<EventResponse> getMyAttendingEvents(Long userId);
 
-    /**
-     * List events belonging to the authenticated user.
-     * Includes events the user organized and events the user is attending.
-     *
-     * @param userId   the authenticated user's ID
-     * @param status   optional filter by event status
-     * @param role     optional filter by user's role ("organizer" or "attendee")
-     * @param pageable pagination and sorting information
-     * @return page of event responses
-     */
-    Page<EventResponse> getMyEvents(Long userId, EventStatus status, String role, Pageable pageable);
+    List<EventResponse> getMyPendingEvents(Long userId);
+
+    Page<EventResponse> getMyPastEvents(Long userId, Pageable pageable);
 }

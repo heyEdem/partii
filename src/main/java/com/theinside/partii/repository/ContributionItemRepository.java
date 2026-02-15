@@ -13,19 +13,18 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Repository for ContributionItem entity with custom query methods.
  */
 @Repository
-public interface ContributionItemRepository extends JpaRepository<ContributionItem, UUID> {
+public interface ContributionItemRepository extends JpaRepository<ContributionItem, Long> {
 
     // ===== Basic Queries =====
 
-    List<ContributionItem> findByEventId(UUID eventId);
+    List<ContributionItem> findByEventId(Long eventId);
 
-    Page<ContributionItem> findByEventId(UUID eventId, Pageable pageable);
+    Page<ContributionItem> findByEventId(Long eventId, Pageable pageable);
 
     List<ContributionItem> findByAssignedToId(Long userId);
 
@@ -33,9 +32,9 @@ public interface ContributionItemRepository extends JpaRepository<ContributionIt
 
     // ===== Status Queries =====
 
-    List<ContributionItem> findByEventIdAndStatus(UUID eventId, ContributionStatus status);
+    List<ContributionItem> findByEventIdAndStatus(Long eventId, ContributionStatus status);
 
-    List<ContributionItem> findByEventIdAndStatusIn(UUID eventId, List<ContributionStatus> statuses);
+    List<ContributionItem> findByEventIdAndStatusIn(Long eventId, List<ContributionStatus> statuses);
 
     @Query("""
         SELECT ci FROM ContributionItem ci
@@ -43,22 +42,22 @@ public interface ContributionItemRepository extends JpaRepository<ContributionIt
         AND ci.status = 'AVAILABLE'
         ORDER BY ci.priority ASC, ci.createdAt ASC
         """)
-    List<ContributionItem> findAvailableByEventId(@Param("eventId") UUID eventId);
+    List<ContributionItem> findAvailableByEventId(@Param("eventId") Long eventId);
 
     // ===== Category Queries =====
 
-    List<ContributionItem> findByEventIdAndCategory(UUID eventId, String category);
+    List<ContributionItem> findByEventIdAndCategory(Long eventId, String category);
 
     @Query("SELECT DISTINCT ci.category FROM ContributionItem ci WHERE ci.event.id = :eventId AND ci.category IS NOT NULL")
-    List<String> findDistinctCategoriesByEventId(@Param("eventId") UUID eventId);
+    List<String> findDistinctCategoriesByEventId(@Param("eventId") Long eventId);
 
     // ===== Type Queries =====
 
-    List<ContributionItem> findByEventIdAndType(UUID eventId, ContributionType type);
+    List<ContributionItem> findByEventIdAndType(Long eventId, ContributionType type);
 
     // ===== Priority Queries =====
 
-    List<ContributionItem> findByEventIdAndPriority(UUID eventId, Priority priority);
+    List<ContributionItem> findByEventIdAndPriority(Long eventId, Priority priority);
 
     @Query("""
         SELECT ci FROM ContributionItem ci
@@ -67,15 +66,15 @@ public interface ContributionItemRepository extends JpaRepository<ContributionIt
         AND ci.status = 'AVAILABLE'
         ORDER BY ci.createdAt ASC
         """)
-    List<ContributionItem> findUnclaimedMustHaveItems(@Param("eventId") UUID eventId);
+    List<ContributionItem> findUnclaimedMustHaveItems(@Param("eventId") Long eventId);
 
     // ===== Count Queries =====
 
-    long countByEventId(UUID eventId);
+    long countByEventId(Long eventId);
 
-    long countByEventIdAndStatus(UUID eventId, ContributionStatus status);
+    long countByEventIdAndStatus(Long eventId, ContributionStatus status);
 
-    long countByEventIdAndCompleted(UUID eventId, boolean completed);
+    long countByEventIdAndCompleted(Long eventId, boolean completed);
 
     @Query("""
         SELECT COUNT(ci) FROM ContributionItem ci
@@ -83,7 +82,7 @@ public interface ContributionItemRepository extends JpaRepository<ContributionIt
         AND ci.priority = 'MUST_HAVE'
         AND ci.status = 'AVAILABLE'
         """)
-    long countUnclaimedMustHaveItems(@Param("eventId") UUID eventId);
+    long countUnclaimedMustHaveItems(@Param("eventId") Long eventId);
 
     // ===== User's Contributions =====
 
@@ -103,27 +102,27 @@ public interface ContributionItemRepository extends JpaRepository<ContributionIt
         AND ci.assignedTo.id = :userId
         """)
     List<ContributionItem> findByEventIdAndAssignedTo(
-        @Param("eventId") UUID eventId,
+        @Param("eventId") Long eventId,
         @Param("userId") Long userId
     );
 
     // ===== Cost Queries =====
 
     @Query("SELECT SUM(ci.estimatedCost) FROM ContributionItem ci WHERE ci.event.id = :eventId")
-    BigDecimal sumEstimatedCostByEventId(@Param("eventId") UUID eventId);
+    BigDecimal sumEstimatedCostByEventId(@Param("eventId") Long eventId);
 
     @Query("""
         SELECT SUM(ci.estimatedCost) FROM ContributionItem ci
         WHERE ci.event.id = :eventId
         AND ci.status IN ('CLAIMED', 'CONFIRMED')
         """)
-    BigDecimal sumClaimedCostByEventId(@Param("eventId") UUID eventId);
+    BigDecimal sumClaimedCostByEventId(@Param("eventId") Long eventId);
 
     // ===== Completion Queries =====
 
-    List<ContributionItem> findByEventIdAndCompletedTrue(UUID eventId);
+    List<ContributionItem> findByEventIdAndCompletedTrue(Long eventId);
 
-    List<ContributionItem> findByEventIdAndCompletedFalse(UUID eventId);
+    List<ContributionItem> findByEventIdAndCompletedFalse(Long eventId);
 
     @Query("""
         SELECT ci FROM ContributionItem ci
@@ -132,7 +131,7 @@ public interface ContributionItemRepository extends JpaRepository<ContributionIt
         AND ci.completed = false
         ORDER BY ci.priority ASC
         """)
-    List<ContributionItem> findPendingCompletionByEventId(@Param("eventId") UUID eventId);
+    List<ContributionItem> findPendingCompletionByEventId(@Param("eventId") Long eventId);
 
     // ===== Alert Queries =====
 
@@ -155,5 +154,5 @@ public interface ContributionItemRepository extends JpaRepository<ContributionIt
 
     // ===== Deletion =====
 
-    void deleteByEventId(UUID eventId);
+    void deleteByEventId(Long eventId);
 }
