@@ -36,6 +36,8 @@ public interface ContributionItemRepository extends JpaRepository<ContributionIt
 
     List<ContributionItem> findByEventIdAndStatus(Long eventId, ContributionStatus status);
 
+    Page<ContributionItem> findByEventIdAndStatus(Long eventId, ContributionStatus status, Pageable pageable);
+
     List<ContributionItem> findByEventIdAndStatusIn(Long eventId, List<ContributionStatus> statuses);
 
     @Query("""
@@ -50,6 +52,8 @@ public interface ContributionItemRepository extends JpaRepository<ContributionIt
 
     List<ContributionItem> findByEventIdAndCategory(Long eventId, String category);
 
+    Page<ContributionItem> findByEventIdAndCategory(Long eventId, String category, Pageable pageable);
+
     @Query("SELECT DISTINCT ci.category FROM ContributionItem ci WHERE ci.event.id = :eventId AND ci.category IS NOT NULL")
     List<String> findDistinctCategoriesByEventId(@Param("eventId") Long eventId);
 
@@ -57,9 +61,13 @@ public interface ContributionItemRepository extends JpaRepository<ContributionIt
 
     List<ContributionItem> findByEventIdAndType(Long eventId, ContributionType type);
 
+    Page<ContributionItem> findByEventIdAndType(Long eventId, ContributionType type, Pageable pageable);
+
     // ===== Priority Queries =====
 
     List<ContributionItem> findByEventIdAndPriority(Long eventId, Priority priority);
+
+    Page<ContributionItem> findByEventIdAndPriority(Long eventId, Priority priority, Pageable pageable);
 
     @Query("""
         SELECT ci FROM ContributionItem ci
