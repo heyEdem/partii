@@ -143,7 +143,6 @@ public class UserController {
         log.debug("Getting active contributions for user {}", user.getUserId());
         return ResponseEntity.ok(contributionService.getMyContributions(user.getUserId()));
     }
-
     /**
      * GET /api/users/health
      * Health check endpoint for user service.
