@@ -38,6 +38,36 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ProblemDetail handleResourceNotFoundException(ResourceNotFoundException ex) {
+        logger.warn("Resource not found: {}", ex.getMessage());
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                ex.getMessage()
+        );
+        problem.setType(URI.create(PROBLEM_BASE_URI + "not-found"));
+        problem.setTitle("Resource Not Found");
+        problem.setProperty("timestamp", Instant.now());
+
+        return problem;
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ProblemDetail handleBadRequestException(BadRequestException ex) {
+        logger.warn("Bad request: {}", ex.getMessage());
+
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage()
+        );
+        problem.setType(URI.create(PROBLEM_BASE_URI + "bad-request"));
+        problem.setTitle("Bad Request");
+        problem.setProperty("timestamp", Instant.now());
+
+        return problem;
+    }
+
     @ExceptionHandler(ValidationException.class)
     public ProblemDetail handleValidationException(ValidationException ex) {
         logger.warn("Validation failed: {}", ex.getMessage());
