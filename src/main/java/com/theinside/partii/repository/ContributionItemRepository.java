@@ -30,6 +30,8 @@ public interface ContributionItemRepository extends JpaRepository<ContributionIt
 
     Page<ContributionItem> findByAssignedToId(Long userId, Pageable pageable);
 
+    List<ContributionItem> findByEventIdAndAssignedToIdAndStatus(Long eventId, Long userId, ContributionStatus status);
+
     // ===== Status Queries =====
 
     List<ContributionItem> findByEventIdAndStatus(Long eventId, ContributionStatus status);
