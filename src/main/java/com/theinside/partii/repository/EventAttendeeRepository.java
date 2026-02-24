@@ -34,6 +34,8 @@ public interface EventAttendeeRepository extends JpaRepository<EventAttendee, Lo
 
     boolean existsByEventIdAndUserId(Long eventId, Long userId);
 
+    boolean existsByEventIdAndUserIdAndStatus(Long eventId, Long userId, AttendeeStatus status);
+
     // ===== Status Queries =====
 
     List<EventAttendee> findByEventIdAndStatus(Long eventId, AttendeeStatus status);

@@ -155,6 +155,46 @@ public class ContributionItem {
     }
 
     /**
+     * Assigns this item to a user (organizer-initiated).
+     * @param user The user being assigned the item
+     * @throws IllegalStateException if item is not available
+     */
+    public void assign(User user) {
+        if (status != ContributionStatus.AVAILABLE) {
+            throw new IllegalStateException("Item is not available for assignment");
+        }
+        this.assignedTo = user;
+        this.status = ContributionStatus.ASSIGNED;
+        this.claimedAt = Instant.now();
+    }
+
+    /**
+     * Accepts an assignment (attendee-initiated).
+     * @throws IllegalStateException if item is not assigned
+     */
+    public void acceptAssignment() {
+        if (status != ContributionStatus.ASSIGNED) {
+            throw new IllegalStateException("Item must be assigned before accepting");
+        }
+        this.status = ContributionStatus.CONFIRMED;
+        this.confirmedAt = Instant.now();
+    }
+
+    /**
+     * Declines an assignment, resetting the item to available.
+     * @throws IllegalStateException if item is not assigned
+     */
+    public void declineAssignment() {
+        if (status != ContributionStatus.ASSIGNED) {
+            throw new IllegalStateException("Item must be assigned before declining");
+        }
+        this.assignedTo = null;
+        this.status = ContributionStatus.AVAILABLE;
+        this.claimedAt = null;
+        this.confirmedAt = null;
+    }
+
+    /**
      * Confirms the claim for this item.
      * @throws IllegalStateException if item is not claimed
      */

@@ -15,6 +15,11 @@ public enum ContributionStatus {
     CLAIMED,
 
     /**
+     * Organizer assigned item to an attendee, awaiting attendee acceptance.
+     */
+    ASSIGNED,
+
+    /**
      * Organizer confirmed the claim, attendee is responsible for this item.
      */
     CONFIRMED

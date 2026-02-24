@@ -42,7 +42,7 @@ public class AttendeeServiceImpl implements AttendeeService {
 
         // Check for duplicate request
         if (attendeeRepository.existsByEventIdAndUserId(eventId, userId)) {
-            throw new BadRequestException("You have already requested to join this event");
+            throw new IllegalStateException("You have already requested to join this event");
         }
 
         // Event must be ACTIVE or FULL (waitlist)

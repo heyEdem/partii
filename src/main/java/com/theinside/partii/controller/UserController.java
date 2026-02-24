@@ -2,6 +2,7 @@ package com.theinside.partii.controller;
 
 import com.theinside.partii.dto.*;
 import com.theinside.partii.security.SecurityUser;
+import com.theinside.partii.service.ContributionService;
 import com.theinside.partii.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * REST controller for user operations.
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final ContributionService contributionService;
 
 
     /**
@@ -125,6 +129,20 @@ public class UserController {
     }
 
 
+    // ===== Contribution Endpoints =====
+
+    /**
+     * GET /api/users/me/contributions
+     * Get the current user's active contributions across all events.
+     */
+    @GetMapping("/me/contributions")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<List<ContributionItemResponse>> getMyContributions(
+        @AuthenticationPrincipal SecurityUser user
+    ) {
+        log.debug("Getting active contributions for user {}", user.getUserId());
+        return ResponseEntity.ok(contributionService.getMyContributions(user.getUserId()));
+    }
     /**
      * GET /api/users/health
      * Health check endpoint for user service.
